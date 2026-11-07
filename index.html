@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Irregular-Income Debt Baseline Calculator — free single-page tool</title>
+<meta name="description" content="A free baseline planner for freelancers and gig workers paying off debt on irregular income. Baseline month, buffer first, then waterfall the extra. No sign-up.">
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #1a1a1a; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+  label { display: block; margin: .6rem 0 .2rem; font-weight: 600; }
+  input, select { width: 100%; max-width: 320px; padding: .45rem; font-size: 1rem; border: 1px solid #999; border-radius: 4px; box-sizing: border-box; }
+  table { border-collapse: collapse; width: 100%; margin-top: .5rem; }
+  th, td { border: 1px solid #ccc; padding: .4rem; text-align: left; font-size: .95rem; }
+  th { background: #f2f2f2; }
+  td input { max-width: none; }
+  .result { background: #f7f7f7; border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-top: 1rem; }
+  .result p { margin: .4rem 0; }
+  .warn { color: #8a1f1f; font-weight: 600; }
+  .ok { color: #1d5c2e; font-weight: 600; }
+  .muted { color: #555; font-size: .9rem; }
+  button { padding: .55rem 1.1rem; font-size: 1rem; margin-top: 1rem; cursor: pointer; }
+  .tier { border-left: 4px solid #888; padding-left: .8rem; margin: .8rem 0; }
+</style>
+</head>
+<body>
+<h1>Irregular-Income Debt Baseline Calculator</h1>
+<p class="muted">Free single-page tool. No sign-up, no data leaves your browser — every number is computed locally. It answers one question: <strong>this month, with this income, what do I pay — and what do I hold back?</strong></p>
+
+<h2>1. Your income and essentials</h2>
+<label for="lowIncome">Lowest-month take-home pay (your baseline month, $)</label>
+<input id="lowIncome" type="number" min="0" step="1" value="3000">
+<label for="thisIncome">This month's actual take-home pay ($)</label>
+<input id="thisIncome" type="number" min="0" step="1" value="5200">
+<label for="essentials">Essential monthly spending, excluding debt payments ($/month: rent, food, utilities, transport, insurance)</label>
+<input id="essentials" type="number" min="0" step="1" value="2200">
+<label for="buffer">Cash buffer you already have ($)</label>
+<input id="buffer" type="number" min="0" step="1" value="800">
+<label for="bufferMonths">Buffer target (months of essentials)</label>
+<select id="bufferMonths">
+  <option value="1" selected>1 month — minimum before extra debt payments</option>
+  <option value="2">2 months</option>
+  <option value="3">3 months — aggressive payoff mode</option>
+</select>
+
+<h2>2. Your debts</h2>
+<p class="muted">Minimum payment = the amount the lender requires each month. Leave unused rows at 0.</p>
+<table>
+  <thead><tr><th>Debt</th><th>Balance ($)</th><th>APR (%)</th><th>Minimum ($/mo)</th></tr></thead>
+  <tbody id="debts">
+    <tr><td><input class="dname" value="Credit card A"></td><td><input class="dbal" type="number" min="0" step="1" value="4200"></td><td><input class="dapr" type="number" min="0" step="0.1" value="24.9"></td><td><input class="dmin" type="number" min="0" step="1" value="120"></td></tr>
+    <tr><td><input class="dname" value="Credit card B"></td><td><input class="dbal" type="number" min="0" step="1" value="1800"></td><td><input class="dapr" type="number" min="0" step="0.1" value="19.9"></td><td><input class="dmin" type="number" min="0" step="1" value="60"></td></tr>
+    <tr><td><input class="dname" value="Personal loan"></td><td><input class="dbal" type="number" min="0" step="1" value="6500"></td><td><input class="dapr" type="number" min="0" step="0.1" value="11.5"></td><td><input class="dmin" type="number" min="0" step="1" value="210"></td></tr>
+    <tr><td><input class="dname" value=""></td><td><input class="dbal" type="number" min="0" step="1" value="0"></td><td><input class="dapr" type="number" min="0" step="0.1" value="0"></td><td><input class="dmin" type="number" min="0" step="1" value="0"></td></tr>
+    <tr><td><input class="dname" value=""></td><td><input class="dbal" type="number" min="0" step="1" value="0"></td><td><input class="dapr" type="number" min="0" step="0.1" value="0"></td><td><input class="dmin" type="number" min="0" step="1" value="0"></td></tr>
+  </tbody>
+</table>
+<label for="method">Extra-payment order</label>
+<select id="method">
+  <option value="snowball" selected>Snowball — smallest balance first (quick wins)</option>
+  <option value="avalanche">Avalanche — highest APR first (least interest)</option>
+</select>
+
+<button id="calc">Calculate this month</button>
+
+<div class="result" id="out" aria-live="polite"><p>Press “Calculate this month”.</p></div>
+
+<h2>The three-tier rule this calculator follows</h2>
+<div class="tier"><strong>Tier 1 — buffer under 1 month of essentials:</strong> pay minimums only. Every spare dollar goes to the buffer first. A low month with no buffer is how people re-borrow to pay debt.</div>
+<div class="tier"><strong>Tier 2 — buffer at 1 month:</strong> minimums + buffer top-up if needed, then all extra to one target debt (snowball or avalanche). High months pay down debt; low months fall back to minimums without touching the buffer.</div>
+<div class="tier"><strong>Tier 3 — buffer at 3 months:</strong> throw everything above essentials + minimums at the target debt. The buffer is what lets you be aggressive without risking a missed payment.</div>
+<p class="muted">Why the baseline month matters: a budget built on average income breaks in a low month. This calculator sizes everything to your lowest month, then treats a good month as a bonus to allocate — never as the plan.</p>
+
+<h2>What this does not do</h2>
+<ul>
+  <li class="muted">It is a baseline planner, not financial advice. It does not know your loan terms, fees, penalty rates, or tax situation.</li>
+  <li class="muted">The debt-free estimate assumes every future month equals your lowest month — deliberately conservative. Real months with higher income will finish sooner.</li>
+  <li class="muted">It assumes fixed APRs and no new borrowing. Variable rates and new charges change the numbers.</li>
+</ul>
+
+<h2>Want the full spreadsheet?</h2>
+<p>I am building a full irregular-income debt payoff spreadsheet (Snowball / Avalanche + buffer waterfall, month-by-month plan, Google Sheets + Excel). If you want it when it is ready, <a href="mailto:alapha888@gmail.com?subject=Full%20irregular-income%20debt%20payoff%20spreadsheet%20%E2%80%94%20request">request the full spreadsheet</a> — one email, no list, no follow-up unless you ask.</p>
+<p class="muted">Source: <a href="https://github.com/alapha888/irregular-income-debt-baseline">github.com/alapha888/irregular-income-debt-baseline</a> · MIT licensed · All math runs in your browser.</p>
+
+<script>
+function num(id) { const v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+function getDebts() {
+  const rows = document.querySelectorAll('#debts tr');
+  const out = [];
+  rows.forEach(r => {
+    const bal = parseFloat(r.querySelector('.dbal').value) || 0;
+    const apr = parseFloat(r.querySelector('.dapr').value) || 0;
+    const min = parseFloat(r.querySelector('.dmin').value) || 0;
+    const name = r.querySelector('.dname').value.trim() || 'Unnamed debt';
+    if (bal > 0) out.push({ name, balance: bal, apr, min });
+  });
+  return out;
+}
+
+function orderDebts(debts, method) {
+  const d = debts.slice();
+  if (method === 'snowball') d.sort((a, b) => a.balance - b.balance);
+  else d.sort((a, b) => b.apr - a.apr);
+  return d;
+}
+
+// Conservative projection: every month = lowest-month income.
+// Interest accrues monthly, then minimums are paid, then the extra goes to the first unpaid debt in order.
+function project(debts, method, monthlyExtra) {
+  const ds = orderDebts(debts, method).map(d => ({ ...d }));
+  let months = 0, totalInterest = 0, unsustainable = [];
+  while (ds.some(d => d.balance > 0.005) && months < 600) {
+    months++;
+    let extra = monthlyExtra;
+    for (const d of ds) {
+      if (d.balance <= 0.005) continue;
+      const interest = d.balance * d.apr / 1200;
+      totalInterest += interest;
+      d.balance += interest;
+      if (d.min < interest && !unsustainable.includes(d.name)) unsustainable.push(d.name);
+      const pay = Math.min(d.balance, d.min);
+      d.balance -= pay;
+    }
+    for (const d of ds) {
+      if (extra <= 0) break;
+      if (d.balance <= 0.005) continue;
+      const pay = Math.min(d.balance, extra);
+      d.balance -= pay;
+      extra -= pay;
+    }
+  }
+  return { months, totalInterest, paidOff: !ds.some(d => d.balance > 0.005), unsustainable };
+}
+
+document.getElementById('calc').addEventListener('click', () => {
+  const low = num('lowIncome'), thisM = num('thisIncome'), ess = num('essentials');
+  const buf = num('buffer'), bufMonths = parseFloat(document.getElementById('bufferMonths').value);
+  const method = document.getElementById('method').value;
+  const debts = getDebts();
+  const out = document.getElementById('out');
+  if (!debts.length) { out.innerHTML = '<p class="warn">Add at least one debt with a balance above $0.</p>'; return; }
+  const mins = debts.reduce((s, d) => s + d.min, 0);
+  const baselineNeed = ess + mins;
+  const bufferTarget = ess * bufMonths;
+  const bufferShortfall = Math.max(0, bufferTarget - buf);
+  const thisExtra = thisM - ess - mins;
+  const bufferTopUp = Math.max(0, Math.min(Math.max(0, thisExtra), bufferShortfall));
+  const extraToDebt = Math.max(0, thisExtra - bufferTopUp);
+  const target = orderDebts(debts, method)[0];
+  const bufferAfter = buf + bufferTopUp;
+  const tier = bufferAfter < ess ? 1 : (bufferAfter < ess * 3 ? 2 : 3);
+  const baselineExtra = Math.max(0, low - ess - mins - Math.max(0, bufferTarget - buf));
+  const proj = project(debts, method, baselineExtra);
+
+  let h = '';
+  h += '<p><strong>Baseline check (lowest month):</strong> essentials ' + money(ess) + ' + minimums ' + money(mins) + ' = ' + money(baselineNeed) + ' needed vs ' + money(low) + ' baseline income. ';
+  h += (low >= baselineNeed)
+    ? '<span class="ok">Covered — your lowest month pays for the essentials and every minimum.</span>'
+    : '<span class="warn">NOT covered — short by ' + money(baselineNeed - low) + '. In a low month you would miss something. Cut essentials, or renegotiate a minimum, before paying extra on any debt.</span>';
+  h += '</p>';
+  h += '<p><strong>This month:</strong> ' + money(thisM) + ' income − ' + money(ess) + ' essentials − ' + money(mins) + ' minimums = ' + money(thisExtra) + ' spare. ';
+  if (bufferShortfall > 0) h += 'Buffer is ' + money(bufferShortfall) + ' short of its ' + money(bufferTarget) + ' target, so ' + money(bufferTopUp) + ' goes to the buffer first. ';
+  h += 'Extra to debt: <strong>' + money(extraToDebt) + '</strong> → target: <strong>' + target.name + '</strong> (' + (method === 'snowball' ? 'smallest balance' : 'highest APR') + ').</p>';
+  h += '<p><strong>Tier this month: ' + tier + '</strong> — ' + (tier === 1 ? 'build the buffer, minimums only on debt.' : tier === 2 ? 'buffer at 1 month: extra goes to the target debt.' : 'buffer at 3 months: pay aggressively.') + '</p>';
+  if (proj.unsustainable.length) h += '<p class="warn">Warning: the minimum payment on ' + proj.unsustainable.join(', ') + ' does not cover that month\u2019s interest — the balance grows even if you pay the minimum. Renegotiate or pay more than the minimum on those first.</p>';
+  h += '<p><strong>Debt-free estimate (conservative — every month at baseline income):</strong> ';
+  h += proj.paidOff
+    ? 'about <strong>' + proj.months + ' months</strong> (' + (proj.months / 12).toFixed(1) + ' years), total interest about ' + money(proj.totalInterest) + '.'
+    : 'more than 50 years at baseline income — the plan does not converge. Raise the baseline, cut essentials, or renegotiate terms.';
+  h += ' Good months finish sooner; this is the floor, not the forecast.</p>';
+  h += '<p class="muted">Target order this month (' + method + '): ' + orderDebts(debts, method).map(d => d.name + ' (' + money(d.balance) + ')').join(' → ') + '.</p>';
+  out.innerHTML = h;
+});
+</script>
+</body>
+</html>
